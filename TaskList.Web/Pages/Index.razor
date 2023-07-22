@@ -1,0 +1,33 @@
+﻿@page "/"
+@using TaskList.Infastructure.Services
+@using TaskList.Infastructure.Entities
+@inject TaskListService TaskListService;
+
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+
+
+@code {
+    private List<TaskList> idk;
+
+    protected async override Task OnInitializedAsync()
+    {
+        var newList = new TaskList
+        {
+                PersonId = 1,
+                Title = "test",
+                Description = "Test D",
+                Created = DateTime.Now,
+                Priority = Infastructure.Entities.Priority.Low,
+                Status = Infastructure.Entities.Status.Started
+        };
+
+        await TaskListService.CreateAsync(newList);
+        var bro = 0;
+    }
+}
