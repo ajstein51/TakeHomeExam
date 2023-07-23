@@ -70,10 +70,11 @@
     protected override async void OnParametersSet()
     {
         taskList = await TaskListService.GetAsync(Int32.Parse(Id));
-
         // users would have to code in a number themselves for this to error out
         if (taskList is null)
             NavManager.NavigateTo("/Error/");
+        // Set the prio so it doesnt go to low as default
+        priority = (int)taskList!.Priority;
     }
 
     #region Validation

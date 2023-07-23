@@ -101,10 +101,13 @@
                                 <MudTh>Completed</MudTh>
                             </HeaderContent>
                             <RowTemplate>
-                                <MudTd DataLabel="Created">@TaskItemContext.Created</MudTd>
+                                <MudTd DataLabel="Created">@TaskItemContext.Created.ToShortDateString()</MudTd>
                                 <MudTd DataLabel="Description">@TaskItemContext.Description</MudTd>
                                 <MudTd DataLabel="Notes">@TaskItemContext.Note</MudTd>
-                                <MudTd DataLabel="Completed">@TaskItemContext.Completed</MudTd>
+                                <MudTd DataLabel="Completed">
+                                    @if(TaskItemContext.Completed.HasValue)
+                                        @TaskItemContext.Completed.Value.ToShortDateString()
+                                </MudTd>
                             </RowTemplate>
                         </MudTable>
                     </MudCardContent>
