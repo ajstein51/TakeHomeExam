@@ -92,9 +92,15 @@
             TaskListId = Int32.Parse(Id),
             Created = DateTime.Now
         });
+
+        // log info
+        Logger.LogInformation("Adding new row on task list " + Id);
     }
     private async void DeleteRow(long idx)
     {
+        // log info
+        Logger.LogInformation("Deleting Task Item with Id " + idx);
+
         var options = new DialogOptions { CloseOnEscapeKey = true };
         var result = await DialogService.Show<DeleteCheck>("Are you sure you would like to delete?", options).Result;
         // They confirmed  the delete dialog option (AKA they did not push cancel)

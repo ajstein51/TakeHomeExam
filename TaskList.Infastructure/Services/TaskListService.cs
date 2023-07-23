@@ -28,7 +28,9 @@ public class TaskListService
     public async Task<List<Entities.TaskList>> ListAsync()
     {
         var context = _context.CreateDbContext();
-        return await context.TaskList.ToListAsync();
+        return await context.TaskList
+            .Include(tl => tl.TaskItems)
+            .ToListAsync();
     }
 
     public async Task CreateAsync(Entities.TaskList taskList)

@@ -6,6 +6,7 @@
 @inject IDialogService DialogService
 @inject NavigationManager NavManager
 @inject HttpClient httpClient
+@inject ILogger<TaskList> Logger
 
 <PageTitle>Index</PageTitle>
 
@@ -39,9 +40,10 @@
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Title">
-            @*<MudTd><MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ShowBtnPress(context.Number))">@((context.ShowDetails == true) ? "Hide" : "Show") Address Details</MudButton></MudTd>*@
-
-            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ShowTaskItems(context.Id))">@context.Title</MudButton>
+            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ShowTaskItems(context.Id))">
+                <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" Title="Show Task Items" />
+                @context.Title
+            </MudButton>
         </MudTd>
         <MudTd DataLabel="Description">
             @* Only show the first 250 characters then add a ...*@
@@ -90,17 +92,21 @@
                             <MudText Typo="Typo.body1">Task Items for <strong>@context.Title</strong></MudText>
                         </CardHeaderContent>
                     </MudCardHeader>
-                    <MudCardContent>
-                        @for (int i = 0; i < context.TaskItems.Count(); i++)
-                        {
-                            var idx = i;
-                            <MudPaper Class="d-flex gap-3 mt-3">
-                                <MudDatePicker @bind-Value="context.TaskItems.ElementAt(idx).Created" Disabled="true" Label="Created" Class="mt-1" Text="context.TaskItems.ElementAt(idx).Created.ToShortDateString()"></MudDatePicker>
-                                <MudTextField @bind-Value="context.TaskItems.ElementAt(idx).Description" Label="Checklist Item" Variant="Variant.Text" Required />
-                                <MudTextField @bind-Value="context.TaskItems.ElementAt(idx).Note" Label="Checklist Note" Variant="Variant.Text" />
-                                <MudDatePicker @bind-Date="context.TaskItems.ElementAt(idx).Completed" Label="Completed" Color="Color.Primary"></MudDatePicker>
-                            </MudPaper>
-                        }
+                    <MudCardContent Class="pa-0">
+                        <MudTable Items="context.TaskItems" Elevation="0" Context="TaskItemContext">
+                            <HeaderContent>
+                                <MudTh>Created</MudTh>
+                                <MudTh>Description</MudTh>
+                                <MudTh>Notes</MudTh>
+                                <MudTh>Completed</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Created">@TaskItemContext.Created</MudTd>
+                                <MudTd DataLabel="Description">@TaskItemContext.Description</MudTd>
+                                <MudTd DataLabel="Notes">@TaskItemContext.Created</MudTd>
+                                <MudTd DataLabel="Completed">@TaskItemContext.Created</MudTd>
+                            </RowTemplate>
+                        </MudTable>
                     </MudCardContent>
                 </td>
             </MudTr>
@@ -150,12 +156,18 @@
     // show the taskitems of the tasklist
     private void ShowTaskItems(long id)
     {
+        // log info
+        Logger.LogInformation("Show task lists task items with Id " + id);
+
         ShowDetails[id] = !ShowDetails[id];
     }
 
     // delete a tasklist
     private async void DeleteRow(long idx)
     {
+        // log info
+        Logger.LogInformation("Deleting Task Item with Id " + idx);
+
         var options = new DialogOptions { CloseOnEscapeKey = true };
         var result = await DialogService.Show<DeleteCheck>("Are you sure you would like to delete?", options).Result;
         // They confirmed  the delete dialog option (AKA they did not push cancel)
