@@ -25,6 +25,16 @@ builder.Services.AddScoped<TaskItemService>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddMudServices();
+
+// Logging to console
+// To Do: Look into changing to Serilog
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole(); // app console
+builder.Logging.AddDebug(); // debug console
+builder.Logging.AddEventLog(e =>
+{
+    e.SourceName = "CheckLists";
+});
 #endregion
 
 var app = builder.Build();
@@ -48,10 +58,3 @@ app.MapFallbackToPage("/_Host");
 
 app.Run();
 
-/*
- * DB actions
- * make new migrations
- *      EntityFrameworkCore\Add-Migration [msg]
- * Update the DB
- *      EntityFrameworkCore\Update-Database
- */ 

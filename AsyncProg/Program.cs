@@ -31,7 +31,7 @@ namespace AsyncProg
 
         public static async Task<int> GetProductPriceAsync(int productId)
         {
-            // need something ran async
+            // Do some async things
             await Task.Run(() => DoSomething());
             
             var _context = new ProductInfoConfiguration();
@@ -40,7 +40,7 @@ namespace AsyncProg
 
         public static async Task<int> GetProductStockAsync(int productId)
         {
-            // need something ran async
+            // Do some async things
             await Task.Run(() => DoSomething());
 
             var _context = new ProductInfoConfiguration();

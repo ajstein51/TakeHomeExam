@@ -85,7 +85,6 @@ namespace DTExtension
             return dT;
         }
 
-        // documentation: https://learn.microsoft.com/en-us/dotnet/standard/datetime/converting-between-time-zones
         /*
           *  Arguments: this DateTime: dT variable in use, 
           *             Holidays: HashSet of dates that are marked as holidays, 
@@ -136,7 +135,7 @@ namespace DTExtension
 
             // true represents a weekend AKA non-worked day, false represents a non-weekend AKA work day
             // assume people work every day
-            var Week = new Dictionary<DayOfWeek, bool>
+            var week = new Dictionary<DayOfWeek, bool>
             {
                 { DayOfWeek.Sunday, false },
                 { DayOfWeek.Monday, false },
@@ -149,18 +148,18 @@ namespace DTExtension
 
             if (workWeek.Any())
                 foreach (var day in workWeek)
-                    Week[day] = true;
-            else
+                    week[day] = true;
+            else // default to regular weekend days
             {
-                Week[DayOfWeek.Saturday] = true;
-                Week[DayOfWeek.Sunday] = true;
+                week[DayOfWeek.Saturday] = true;
+                week[DayOfWeek.Sunday] = true;
             }
 
             dT = optionalDays <= 0 ? dT.AddDays(1) : dT.AddDays(optionalDays);
 
-            if (Week.First(day => day.Key == dT.DayOfWeek).Value || holidays.Contains(dT.Date))
+            if (week.First(day => day.Key == dT.DayOfWeek).Value || holidays.Contains(dT.Date))
             {
-                while (Week.First(day => day.Key == dT.DayOfWeek).Value || holidays.Contains(dT.Date))
+                while (week.First(day => day.Key == dT.DayOfWeek).Value || holidays.Contains(dT.Date))
                     dT = dT.AddDays(1);
                 return dT;
             }
@@ -171,6 +170,8 @@ namespace DTExtension
         /*
         *  Arguments: specified timezone: string for a timezone
         *  Desc: checks if the given timezone actually exists and if so it will convert the given datetime to that timezone otherwise it will return default datetime
+        *       documentation: https://learn.microsoft.com/en-us/dotnet/standard/datetime/converting-between-time-zones
+        *  
         *  Return: Default Datetime or converted datetime to specified timezone
         */
         public static DateTime GetChangeTime(DateTime dT, string timeZone)

@@ -12,7 +12,10 @@
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/">Check Lists</MudButton>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/">People</MudButton>
         <MudSpacer />
-        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/">Account</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/">
+            <MudAvatar Size="Size.Small" Color="Color.Primary">A</MudAvatar>
+            Account
+        </MudButton>
         <MudSwitch @bind-Checked="@_isDarkMode" Color="Color.Primary" Class="align-content-center" T="bool" title="Toggle Light/Dark Mode" />
     </MudAppBar>
     <MudMainContent>

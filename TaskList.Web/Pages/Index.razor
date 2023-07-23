@@ -1,38 +1,75 @@
 ﻿@page "/"
 @using TaskList.Infastructure.Services
 @using TaskList.Infastructure.Entities
+@using System.Net.Http.Json
 @inject TaskListService TaskListService
 @inject IDialogService DialogService
 @inject NavigationManager NavManager
+@inject HttpClient httpClient
 
 <PageTitle>Index</PageTitle>
 
-@*
-    To Do:
-        - filters
-        - format the dates on Deadline and Completed
-        - make not ugly
-*@
-<MudTable Class="mt-3" Items="@taskList" Hover="true" Striped="true">
+<MudTable Class="mt-3" @ref="@table" Items="@taskList" Hover="true" Striped="true" RowsPerPage="10" Filter="new Func<TaskList, bool>(SearchTaskList)">
+    <ToolBarContent>
+        <MudSpacer />
+        <MudTextField @bind-Value="search" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
     <HeaderContent>
         <MudTh>Title</MudTh>
         <MudTh>Description</MudTh>
-        <MudTh>Created</MudTh>
-        <MudTh>Deadline</MudTh>
-        <MudTh>Completion</MudTh>
-        <MudTh>Status</MudTh>
-        <MudTh>Priority</MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<TaskList, object>(tl=>tl.Created)">Created</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<TaskList, object>(tl=>tl.Deadline!)">Deadline</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<TaskList, object>(tl=>tl.Completed!)">Completed</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<TaskList, object>(tl=>tl.Status)">Status</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<TaskList, object>(tl=>tl.Priority)">Priority</MudTableSortLabel>
+        </MudTh>
         <MudTh>Action
             <MudIconButton Icon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
                            Href="/Add" />
         </MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Title">@context.Title</MudTd>
-        <MudTd DataLabel="Description">@context.Description</MudTd>
+        <MudTd DataLabel="Title">
+            @*<MudTd><MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ShowBtnPress(context.Number))">@((context.ShowDetails == true) ? "Hide" : "Show") Address Details</MudButton></MudTd>*@
+
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ShowTaskItems(context.Id))">@context.Title</MudButton>
+        </MudTd>
+        <MudTd DataLabel="Description">
+            @* Only show the first 250 characters then add a ...*@
+            @context.Description[0..Math.Min(250, context.Description.Length)];
+        </MudTd>
         <MudTd DataLabel="Created">@context.Created.ToShortDateString()</MudTd>
-        <MudTd DataLabel="Deadline">@context.Deadline</MudTd>
-        <MudTd DataLabel="Completion">@context.Completed</MudTd>
+        <MudTd DataLabel="Deadline">
+            @if (context.Deadline.HasValue)
+            {
+                var totalDays = (context.Deadline.Value - DateTime.Now).TotalDays;
+                if(totalDays > 60)
+                {
+                    <MudChip Color="Color.Success">@context.Deadline.Value.ToShortDateString()</MudChip>
+                }
+                else if(totalDays <= 60 && totalDays > 30)
+                {
+                    <MudChip Color="Color.Warning">@context.Deadline.Value.ToShortDateString()</MudChip>
+                }
+                else 
+                {
+                    <MudChip  Color="Color.Error">@context.Deadline.Value.ToShortDateString()</MudChip>
+                }
+            }
+        </MudTd>
+        <MudTd DataLabel="Completion">
+            @if(context.Completed.HasValue)
+                @context.Completed.Value.ToShortDateString()
+            </MudTd>
         <MudTd DataLabel="Status">@context.Status</MudTd>
         <MudTd DataLabel="Priority">@context.Priority</MudTd>
         <MudTd DataLabel="Action">
@@ -42,27 +79,87 @@
             <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Outlined" Color="Color.Info" Size="Size.Medium" Href=@link />
             <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Outlined" Color="Color.Error" Size="Size.Medium" OnClick="() => DeleteRow(context.Id)" />
         </MudTd>
-
     </RowTemplate>
+    <ChildRowContent>
+        @if (ShowDetails[context.Id])
+        {
+            <MudTr>
+                <td colspan="8">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.body1">Task Items for <strong>@context.Title</strong></MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @for (int i = 0; i < context.TaskItems.Count(); i++)
+                        {
+                            var idx = i;
+                            <MudPaper Class="d-flex gap-3 mt-3">
+                                <MudDatePicker @bind-Value="context.TaskItems.ElementAt(idx).Created" Disabled="true" Label="Created" Class="mt-1" Text="context.TaskItems.ElementAt(idx).Created.ToShortDateString()"></MudDatePicker>
+                                <MudTextField @bind-Value="context.TaskItems.ElementAt(idx).Description" Label="Checklist Item" Variant="Variant.Text" Required />
+                                <MudTextField @bind-Value="context.TaskItems.ElementAt(idx).Note" Label="Checklist Note" Variant="Variant.Text" />
+                                <MudDatePicker @bind-Date="context.TaskItems.ElementAt(idx).Completed" Label="Completed" Color="Color.Primary"></MudDatePicker>
+                            </MudPaper>
+                        }
+                    </MudCardContent>
+                </td>
+            </MudTr>
+        }
+    </ChildRowContent>
+    <PagerContent>
+        <MudPagination SelectedChanged="PageChanged" Count="@((table.GetFilteredItemsCount() + table.RowsPerPage - 1) / table.RowsPerPage)" Class="pa-4" />
+    </PagerContent>
 </MudTable>
 
 @code {
-    // filter args
-
+    // filter
+    private string search = string.Empty;
+    private Dictionary<long, bool> ShowDetails { get; set; } = new Dictionary<long, bool>();
     // output
+    private MudTable<TaskList> table;
     public IEnumerable<TaskList> taskList { get; set; } = Enumerable.Empty<TaskList>();
-
-    // filter functions
 
     protected override async Task OnInitializedAsync()
     {
         taskList = await TaskListService.ListAsync();
+        foreach(var list in taskList)
+            ShowDetails.Add(list.Id, false);
     }
 
+    #region Filters
+    private bool SearchTaskList(TaskList taskList) => FilterFunc(taskList, search);
+
+    private bool FilterFunc(TaskList taskList, string search)
+    {
+        if(string.IsNullOrWhiteSpace(search))
+            return true;
+        if (taskList.Title.Contains(search, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (taskList.Description.Contains(search, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+    #endregion
+
+    // pagination
+    private void PageChanged(int i)
+    {
+        table.NavigateTo(i - 1);
+    }
+
+    // show the taskitems of the tasklist
+    private void ShowTaskItems(long id)
+    {
+        ShowDetails[id] = !ShowDetails[id];
+    }
+
+    // delete a tasklist
     private async void DeleteRow(long idx)
     {
         var options = new DialogOptions { CloseOnEscapeKey = true };
         var result = await DialogService.Show<DeleteCheck>("Are you sure you would like to delete?", options).Result;
+        // They confirmed  the delete dialog option (AKA they did not push cancel)
+        // delete and refresh
         if (!result.Canceled)
         {
             await TaskListService.DeleteAsync(taskList.First(ti => ti.Id == idx));

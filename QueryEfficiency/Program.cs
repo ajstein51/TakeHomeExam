@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
-
 using QueryEfficiency.Configurations;
 using QueryEfficiency.Entities;
 
@@ -11,13 +9,9 @@ namespace QueryEfficiency
         static async Task Main(string[] args)
         {
             var dbContext = new DBContext();
+
+            // clear the db table
             dbContext.Database.ExecuteSqlRaw("DELETE FROM OrderLine");
-            // test
-            //var a = dbContext.Products.ToList();
-            //var b = dbContext.CartItems.ToList();
-            //var c = dbContext.Orders
-            //    .ToList();
-            //var d = dbContext.CustomerPrices.ToList();
 
             var cartItems = dbContext.CartItems.ToList();
             var doStuff2 = await DoQueryOptimizedAsync(dbContext, cartItems);
@@ -58,13 +52,14 @@ namespace QueryEfficiency
             await dbContext.Orders.AddAsync(order);
             await dbContext.SaveChangesAsync();
             Console.WriteLine("End " + DateTime.Now.Second.ToString());
+            // clear the db table
             dbContext.Database.ExecuteSqlRaw("DELETE FROM OrderLine");
             return order;
         }
         #endregion
 
         // Optimized
-        // using dictionary because fast (nearly O(1))
+        // using dictionary because the lookup is fast and in the prompt we never needed more than just the key value
         // old school for loops with an array are some amounts (grand scheme of things marginally) faster than foreach and using lists
         static async Task<Order> DoQueryOptimizedAsync(DBContext dbContext, List<CartItem> cartItems)
         {
@@ -105,6 +100,8 @@ namespace QueryEfficiency
         public static async Task<int> GetCustomerPriceAsync(int customerNumber, int ProductNumber)
         {
             var dbContext = new DBContext();
+
+            // do some async things
             await Task.Run(() => Console.Write(""));
 
             // pretend that thisll never not be null for the exam

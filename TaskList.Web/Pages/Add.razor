@@ -3,6 +3,7 @@
 @inject TaskListService TaskListService
 @inject TaskItemService TaskItemService
 @inject NavigationManager NavManager
+@inject ILogger<TaskList> Logger
 @page "/Add"
 
 <PageTitle>Add</PageTitle>
@@ -10,11 +11,12 @@
 <MudForm @ref="form" @bind-IsValid="@success">
     <MudPaper Class="mt-10">
         <MudPaper Class="d-flex gap-3">
-            <MudTextField @bind-Value="title" Label="Title" Variant="Variant.Text" Counter="100" MaxLength="100" Required />
+            <MudTextField @bind-Value="title" Label="Title" Variant="Variant.Text" Counter="100" MaxLength="100"
+                          Validation="@(new Func<string, IEnumerable<string>>(MaxCharacters))" Required />
             <MudDatePicker Label="Due Date" @bind-Date="deadline" />
         </MudPaper>
 
-        <MudTextField Class="mt-3" @bind-Value="description" Label="Description" Variant="Variant.Text" Required/>
+        <MudTextField Class="mt-3" @bind-Value="description" Label="Description" Variant="Variant.Text" Lines="3" Required/>
 
         <MudSelect Class="mt-3" T="int" Label="Priority" AnchorOrigin="Origin.BottomCenter" @bind-Value="priority">
             <MudSelectItem Value="0">@Priority.Low</MudSelectItem>
@@ -44,27 +46,32 @@
 </MudForm>
 
 @code {
-    // input
 #nullable disable
-    public string title;
-    public string description;
+    public string title { get; set; }
+    public string description { get; set; }
 #nullable disable
-    public DateTime? deadline;
-    public int priority;
+    public DateTime? deadline { get; set; }
+    public int priority { get; set; }
 
-    public bool success;
-    public MudForm form;
+    public bool success { get; set; }
+    public MudForm form { get; set; }
 
     public List<TaskItem> taskItems= new List<TaskItem> { new TaskItem() };
 
+    #region Validation
+    // Current character count for title -> title is limited to 100
     private IEnumerable<string> MaxCharacters(string ch)
     {
-        if (!string.IsNullOrEmpty(ch) && 25 < ch?.Length)
+        if (!string.IsNullOrEmpty(ch) && 100 < ch?.Length)
             yield return "Max 100 characters";
     }
+    #endregion
 
+    #region TaskItemFunctions
+    // add/remove row of TaskItem
     private void AddRow() => taskItems.Add(new TaskItem());
     private void DeleteRow() => taskItems.RemoveAt(taskItems.Count - 1);
+    #endregion
 
     private async void HandleSubmit()
     {
@@ -80,12 +87,16 @@
         };
         await TaskListService.CreateAsync(newTaskList);
 
+        // get the Id of the task just greated to attach to its items
         newTaskList.Id = (await TaskListService.GetAsync(newTaskList)).Id;
 
         foreach (var taskItem in taskItems)
             taskItem.TaskListId = newTaskList.Id;
 
         await TaskItemService.CreateAsync(taskItems);
+
+        // log info
+        Logger.LogInformation("Adding TaskList & TaskItems with Id " + newTaskList.Id);
 
         // post to index 
         NavManager.NavigateTo("/");
