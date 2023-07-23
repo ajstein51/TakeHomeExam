@@ -1,19 +1,37 @@
 ﻿@inherits LayoutComponentBase
 
+<MudThemeProvider @ref="@_mudThemeProvider" @bind-IsDarkMode="@_isDarkMode" />
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
 <PageTitle>TaskList.Web</PageTitle>
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<MudLayout>
+    <MudAppBar>
+        <MudImage Src="/img/logo.jpg" Width="300" Height="65" Elevation="25" Class="rounded-lg me-3"/>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/">Check Lists</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/">People</MudButton>
+        <MudSpacer />
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/">Account</MudButton>
+        <MudSwitch @bind-Checked="@_isDarkMode" Color="Color.Primary" Class="align-content-center" T="bool" title="Toggle Light/Dark Mode" />
+    </MudAppBar>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+    
+</MudLayout>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+@code {
+    private bool _isDarkMode;
+    private MudThemeProvider _mudThemeProvider;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isDarkMode = await _mudThemeProvider.GetSystemPreference();
+            StateHasChanged();
+        }
+    }
+}

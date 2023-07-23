@@ -4,25 +4,29 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using TaskList.Web.Data;
 using TaskList.Infastructure;
 using TaskList.Infastructure.Services;
-
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
 
+#region ThingsIAdded
 // db string
 builder.Services.AddDbContextFactory<DBContext>(o 
     =>o.UseSqlServer(builder.Configuration.GetConnectionString("TaskLists")));
 // Add scopes
 builder.Services.AddScoped<TaskListService>();
+builder.Services.AddScoped<TaskItemService>();
+
 
 builder.Services.AddHttpClient();
+builder.Services.AddMudServices();
+#endregion
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -43,3 +47,11 @@ app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
 app.Run();
+
+/*
+ * DB actions
+ * make new migrations
+ *      EntityFrameworkCore\Add-Migration [msg]
+ * Update the DB
+ *      EntityFrameworkCore\Update-Database
+ */ 

@@ -1,0 +1,95 @@
+﻿@using TaskList.Infastructure.Services
+@using TaskList.Infastructure.Entities
+@inject TaskListService TaskListService
+@inject TaskItemService TaskItemService
+@inject NavigationManager NavManager
+@inject IDialogService DialogService
+@page "/Details/{Id}"
+
+<PageTitle>Details</PageTitle>
+
+<MudForm @ref="form" @bind-IsValid="@success">
+    <MudPaper Class="mt-10">
+        <MudPaper Class="d-flex gap-3">
+            <MudTextField @bind-Value="taskList.Title" Label="Title" Variant="Variant.Text" Counter="100" MaxLength="100" Required />
+            <MudDatePicker Label="Due Date" @bind-Date="taskList.Deadline" Required />
+        </MudPaper>
+
+        <MudTextField Class="mt-3" @bind-Value="taskList.Description" Label="Description" Variant="Variant.Text" Required />
+
+        <MudSelect Class="mt-3" T="int" Label="Priority" AnchorOrigin="Origin.BottomCenter" @bind-Value="priority">
+            <MudSelectItem Value="0">@Priority.Low</MudSelectItem>
+            <MudSelectItem Value="1">@Priority.Medium</MudSelectItem>
+            <MudSelectItem Value="2">@Priority.High</MudSelectItem>
+        </MudSelect>
+
+        <MudPaper Class="mt-5">
+            <span>
+                Check List Items
+                <MudIconButton Icon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="AddRow" Title="New Checklist Item" />
+            </span>
+            @for (int i = 0; i < taskList.TaskItems.Count(); i++)
+            {
+                var idx = i;
+                <MudPaper Class="d-flex gap-3 mt-3">
+                    <MudDatePicker @bind-Value="@taskList.TaskItems.ElementAt(idx).Created" Disabled="true" Label="Created" Class="mt-1" Text="@taskList.TaskItems.ElementAt(idx).Created.ToShortDateString()"></MudDatePicker>
+                    <MudTextField @bind-Value="taskList.TaskItems.ElementAt(idx).Description" Label="Checklist Item" Variant="Variant.Text" Required />
+                    <MudTextField  @bind-Value="taskList.TaskItems.ElementAt(idx).Note" Label="Checklist Note" Variant="Variant.Text" />
+                    <MudDatePicker @bind-Date="taskList.TaskItems.ElementAt(idx).Completed" Label="Completed" Color="Color.Primary"></MudDatePicker>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Outlined" Color="Color.Error" Size="Size.Medium" OnClick="() => DeleteRow(taskList.TaskItems.ElementAt(idx).Id)" />
+                </MudPaper>
+            }
+
+        </MudPaper>
+
+        <MudPaper Class="mt-3">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!success)" Class="ml-auto" OnClick="HandleSubmit">Submit</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" DisableElevation="true" Class="mx-2" Href="/">Back</MudButton>
+        </MudPaper>
+    </MudPaper>
+</MudForm>
+
+@code {
+    #nullable disable
+    [Parameter]
+    public string Id { get; set; }
+
+    public TaskList taskList { get; set; }
+#nullable enable
+
+    // update vars
+    public int priority { get; set; }
+    public bool success { get; set; }
+    public MudForm form { get; set; }
+
+    private void AddRow() => taskList.TaskItems.Add(new TaskItem());
+    private async void DeleteRow(long idx)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var result = await DialogService.Show<DeleteCheck>("Are you sure you would like to delete?", options).Result;
+        if (!result.Canceled)
+        {
+            await TaskItemService.DeleteAsync(taskList.TaskItems.First(ti => ti.Id == idx));
+            NavManager.NavigateTo(NavManager.Uri, true);
+        }
+    }
+
+    protected override async void OnParametersSet()
+    {
+        taskList = await TaskListService.GetAsync(Int32.Parse(Id));
+
+        // users would have to code in a number themselves for this to error out
+        if (taskList is null)
+            throw new Exception("This tasklist doesn't exist");
+    }
+
+    private async void HandleSubmit()
+    {
+        if ((int)taskList.Priority != priority)
+            taskList.Priority = (Infastructure.Entities.Priority)priority;
+        await TaskListService.UpdateAsync(taskList);
+
+        // Refresh
+        NavManager.NavigateTo("/Details/" + Id);
+    }
+}

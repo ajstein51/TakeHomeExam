@@ -1,0 +1,93 @@
+﻿@using TaskList.Infastructure.Services
+@using TaskList.Infastructure.Entities
+@inject TaskListService TaskListService
+@inject TaskItemService TaskItemService
+@inject NavigationManager NavManager
+@page "/Add"
+
+<PageTitle>Add</PageTitle>
+
+<MudForm @ref="form" @bind-IsValid="@success">
+    <MudPaper Class="mt-10">
+        <MudPaper Class="d-flex gap-3">
+            <MudTextField @bind-Value="title" Label="Title" Variant="Variant.Text" Counter="100" MaxLength="100" Required />
+            <MudDatePicker Label="Due Date" @bind-Date="deadline" />
+        </MudPaper>
+
+        <MudTextField Class="mt-3" @bind-Value="description" Label="Description" Variant="Variant.Text" Required/>
+
+        <MudSelect Class="mt-3" T="int" Label="Priority" AnchorOrigin="Origin.BottomCenter" @bind-Value="priority">
+            <MudSelectItem Value="0">@Priority.Low</MudSelectItem>
+            <MudSelectItem Value="1">@Priority.Medium</MudSelectItem>
+            <MudSelectItem Value="2">@Priority.High</MudSelectItem>
+        </MudSelect>
+
+        <MudPaper Class="mt-5">
+            <span>
+                Check List Items
+                <MudIconButton Icon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="AddRow" Title="New Checklist Item"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Outlined" Color="Color.Error" Size="Size.Medium" OnClick="DeleteRow"/>
+            </span>
+            @for (int i = 0; i < taskItems.Count(); i++)
+            {
+                var idx = i;
+                <MudTextField  Class="mt-1" @bind-Value="taskItems[idx].Description" Label="Checklist Item" Variant="Variant.Text" Required/>
+            }
+
+        </MudPaper>
+
+        <MudPaper Class="mt-3">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!success)" Class="ml-auto" OnClick="HandleSubmit">Submit</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" DisableElevation="true" Class="mx-2" Href="/" >Back</MudButton>
+        </MudPaper>
+    </MudPaper>
+</MudForm>
+
+@code {
+    // input
+#nullable disable
+    public string title;
+    public string description;
+#nullable disable
+    public DateTime? deadline;
+    public int priority;
+
+    public bool success;
+    public MudForm form;
+
+    public List<TaskItem> taskItems= new List<TaskItem> { new TaskItem() };
+
+    private IEnumerable<string> MaxCharacters(string ch)
+    {
+        if (!string.IsNullOrEmpty(ch) && 25 < ch?.Length)
+            yield return "Max 100 characters";
+    }
+
+    private void AddRow() => taskItems.Add(new TaskItem());
+    private void DeleteRow() => taskItems.RemoveAt(taskItems.Count - 1);
+
+    private async void HandleSubmit()
+    {
+        var newTaskList = new TaskList
+        {
+            PersonId = 1,
+            Title = title,
+            Description = description,
+            Created = DateTime.Now,
+            Deadline = deadline ?? null,
+            Priority = (Infastructure.Entities.Priority)priority,
+            Status = Infastructure.Entities.Status.NotStarted,
+        };
+        await TaskListService.CreateAsync(newTaskList);
+
+        newTaskList.Id = (await TaskListService.GetAsync(newTaskList)).Id;
+
+        foreach (var taskItem in taskItems)
+            taskItem.TaskListId = newTaskList.Id;
+
+        await TaskItemService.CreateAsync(taskItems);
+
+        // post to index 
+        NavManager.NavigateTo("/");
+    }
+}

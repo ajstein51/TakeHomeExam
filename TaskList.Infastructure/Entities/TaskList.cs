@@ -9,25 +9,22 @@ public class TaskList
     public int PersonId { get; set; }
     
     [StringLength(100)]
-    public required string Title { get; set; }
-    public required string Description { get; set;}
+    public string Title { get; set; }
+    public string Description { get; set;}
 
 
     [DataType(DataType.Date)]
-    [DisplayFormat(DataFormatString = "{0:MM/dd/yy")]
     public DateTime Created { get; set; }
     [DataType(DataType.Date)]
-    [DisplayFormat(DataFormatString = "{0:MM/dd/yy")]
     public DateTime? Deadline { get; set; }
     [DataType(DataType.Date)]
-    [DisplayFormat(DataFormatString = "{0:MM/dd/yy")]
     public DateTime? Completed { get; set; }
 
     public Priority Priority { get; set; }
     public Status Status { get; set; }
 
     // navigational properties
-    public ICollection<TaskItem> ListTasks { get; set; } = new HashSet<TaskItem>();
+    public ICollection<TaskItem> TaskItems { get; set; } = new HashSet<TaskItem>();
 }
 
 public enum Priority

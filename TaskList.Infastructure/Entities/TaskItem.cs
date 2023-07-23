@@ -8,8 +8,7 @@ public class TaskItem
     public long Id { get; set; }
     public long TaskListId { get; set; }
 
-    public bool IsCompleted { get; set; }
-
+    public string Description { get; set; }
     public string? Note { get; set; }
 
     [DataType(DataType.Date)]
@@ -17,7 +16,7 @@ public class TaskItem
     public DateTime Created { get; set; }
     [DataType(DataType.Date)]
     [DisplayFormat(DataFormatString = "{0:MM/dd/yy")]
-    public DateTime Completed { get; set; }
+    public DateTime? Completed { get; set; }
 
 #nullable disable
     public TaskList TaskList { get; set; }
